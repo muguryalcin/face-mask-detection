@@ -1,5 +1,0 @@
-name: fasterrcnn_resnet50_fpn
-pretrained: true
-trainable_backbone_layers: 3
-learning_rate: 0.005
-weight_decay: 0.0005

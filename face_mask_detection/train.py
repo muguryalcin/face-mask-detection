@@ -4,32 +4,14 @@ from pathlib import Path
 import mlflow
 import torch
 from lightning import Trainer, seed_everything
-from lightning.pytorch.callbacks import Callback, ModelCheckpoint
+from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import MLFlowLogger
 
 from face_mask_detection.data import FaceMaskDataModule
 from face_mask_detection.dvc_utils import ensure_data_available
+from face_mask_detection.metrics import MetricsHistory
 from face_mask_detection.model import FaceMaskDetector
 from face_mask_detection.plots import write_training_plots
-
-
-class MetricsHistory(Callback):
-    # Custom callback to collect training and validation metrics history for plotting.
-    def __init__(self):
-        self.history = {}
-
-    def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
-        self._collect(trainer.logged_metrics)
-
-    def on_validation_epoch_end(self, trainer, pl_module):
-        self._collect(trainer.callback_metrics)
-
-    def _collect(self, metrics):
-        # Store the scalar metrics in the history dictionary for later plotting.
-        for name, value in metrics.items():
-            scalar = _to_scalar(value)
-            if scalar is not None:
-                self.history.setdefault(str(name), []).append(scalar)
 
 
 def train(cfg):
@@ -139,14 +121,3 @@ def _git_commit_id():
     if result.returncode != 0:
         return "unknown"
     return result.stdout.strip()
-
-
-def _to_scalar(value):
-    # Convert a PyTorch tensor or a numeric value to a Python float scalar for logging. Returns None if the value cannot be converted.
-    if isinstance(value, torch.Tensor):
-        if value.numel() != 1:
-            return None
-        return float(value.detach().cpu())
-    if isinstance(value, (int, float)):
-        return float(value)
-    return None

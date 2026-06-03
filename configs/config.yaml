@@ -10,7 +10,7 @@ defaults:
 seed: 24
 
 paths:
-  data_root: data/asemsaber-face-mask-detection
+  data_root: data
   plots_dir: plots
   models_dir: models
   checkpoints_dir: checkpoints

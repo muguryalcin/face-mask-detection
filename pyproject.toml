@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "face-mask-detection"
 version = "0.1.0"
@@ -15,10 +19,11 @@ dependencies = [
     "numpy>=2.4.6",
     "omegaconf>=2.3.0",
     "pre-commit>=4.6.0",
+    "pycocotools>=2.0.11",
     "torch>=2.12.0",
+    "torchmetrics>=1.8.2",
     "torchvision>=0.27.0",
 ]
-
 [dependency-groups]
 dev = [
     "pre-commit>=4.6.0",
@@ -26,4 +31,4 @@ dev = [
 ]
 
 [project.scripts]
-detect-mask = "face_mask_detection.commands:main"
+detect-mask = "face_mask_detection.cli:main"

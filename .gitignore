@@ -31,3 +31,4 @@ dvc-storage/
 *.onnx
 *.ckpt
 /data
+.DS_Store

@@ -1,18 +1,25 @@
 import torch
 from lightning import LightningModule
+from omegaconf import OmegaConf
 from torchvision.models.detection import (
     FasterRCNN_ResNet50_FPN_Weights,
     fasterrcnn_resnet50_fpn,
 )
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
+from face_mask_detection.metrics import DetectionMetrics
+
 
 class FaceMaskDetector(LightningModule):
     def __init__(self, cfg):
         super().__init__()
         self.cfg = cfg
-        self.save_hyperparameters(cfg)
+        self.save_hyperparameters(OmegaConf.to_container(cfg, resolve=True))
         self.detector = self._build_detector()
+        self.val_metrics = DetectionMetrics(
+            class_names=cfg.data.class_names,
+            score_threshold=float(cfg.inference.score_threshold),
+        )
 
     def forward(self, images):
         return self.detector(images)
@@ -28,14 +35,28 @@ class FaceMaskDetector(LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        # One forward pass to compute validation losses without backpropagation
+        # One forward pass computes validation loss, another computes predictions for metrics.
         images, targets = batch
         loss_dict = self._validation_loss_dict(images, targets)
         loss = self._sum_losses(loss_dict)
+        predictions = self._predict(images)
+
+        self.val_metrics.update(predictions, targets)
         self._log_losses(
             "val", loss, loss_dict, len(images), on_step=False, on_epoch=True
         )
         return loss
+
+    def on_validation_epoch_start(self):
+        self.val_metrics.reset()
+
+    def on_validation_epoch_end(self):
+        metrics = self.val_metrics.compute()
+        for name, value in metrics.items():
+            self.log(
+                f"val/{name}", value, prog_bar=name in {"map_50", "precision", "recall"}
+            )
+        self.val_metrics.reset()
 
     def configure_optimizers(self):
         return torch.optim.AdamW(
@@ -67,14 +88,21 @@ class FaceMaskDetector(LightningModule):
         return detector
 
     def _validation_loss_dict(self, images, targets):
-        # Compute the loss for validation without backprop
+        # Torchvision detectors return losses only in train mode.
         was_training = self.detector.training
         self.detector.train()
         with torch.no_grad():
             loss_dict = self.detector(images, targets)
-        if not was_training:
-            self.detector.eval()
+        self.detector.train(was_training)
         return loss_dict
+
+    def _predict(self, images):
+        was_training = self.detector.training
+        self.detector.eval()
+        with torch.no_grad():
+            predictions = self.detector(images)
+        self.detector.train(was_training)
+        return predictions
 
     def _sum_losses(self, loss_dict):
         # Adds all of the losses
