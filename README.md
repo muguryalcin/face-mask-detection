@@ -1,5 +1,7 @@
 # Face Mask Detection
 
+## Project Description
+
 This repository is an Python package for an end-to-end face mask object detection pipeline. It uses `uv` for package management, DVC for data/model artifact versioning, Hydra/OmegaConf for configuration, MLflow for experiment tracking, PyTorch Lightning for training, and pre-commit for code quality.
 
 ## Problem
@@ -163,7 +165,7 @@ Run default training:
 uv run detect-mask train
 ```
 
-The default training config is the H100-oriented full-data config: 12 epochs, batch size 32, GPU accelerator, and 512x512 preprocessing. A smoke run for checking the pipeline is:
+Or for a quick smoke test without downloading pretrained weights:
 
 ```bash
 uv run detect-mask train training=smoke model.pretrained=false
