@@ -2,12 +2,14 @@ import logging
 import shutil
 import subprocess
 import sys
-from importlib import import_module
+import tempfile
+import zipfile
 from pathlib import Path
 
 from omegaconf import OmegaConf
 
 LOGGER = logging.getLogger(__name__)
+KAGGLE_DATASET_DOWNLOAD_URL = "https://www.kaggle.com/api/v1/datasets/download"
 
 
 def ensure_data_available(cfg):
@@ -76,17 +78,38 @@ def _dataset_dir(data_root, data_yaml_name):
 
 
 def _download_from_kaggle(cfg, data_root):
-    # Download the dataset from Kaggle using the kagglehub package.
-    _status(f"Downloading Kaggle dataset: {cfg.data.kaggle_dataset}")
-    kagglehub = import_module("kagglehub")
-    downloaded_path = Path(kagglehub.dataset_download(cfg.data.kaggle_dataset))
-    _status(f"Downloaded Kaggle dataset to: {downloaded_path}")
+    dataset = str(cfg.data.kaggle_dataset)
+    url = f"{KAGGLE_DATASET_DOWNLOAD_URL}/{dataset}"
+    _status(f"Downloading Kaggle dataset with curl: {dataset}")
 
-    # Clear the existing data root if it exists, then copy the downloaded dataset there.
-    if data_root.exists():
-        shutil.rmtree(data_root)
-    data_root.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(downloaded_path, data_root)
+    with tempfile.TemporaryDirectory() as temporary_dir:
+        temporary_path = Path(temporary_dir)
+        zip_path = temporary_path / "face-mask-detection.zip"
+        extract_path = temporary_path / "extracted"
+
+        result = subprocess.run(
+            ["curl", "-L", "-o", str(zip_path), url],
+            capture_output=True,
+            check=False,
+            text=True,
+        )
+        if result.returncode != 0:
+            if result.stderr.strip():
+                _status(result.stderr.strip())
+            raise RuntimeError(
+                f"Kaggle download failed with exit code {result.returncode}"
+            )
+
+        _status(f"Downloaded Kaggle zip to: {zip_path}")
+        extract_path.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(zip_path) as zip_file:
+            zip_file.extractall(extract_path)
+        _status(f"Extracted Kaggle dataset to: {extract_path}")
+
+        if data_root.exists():
+            shutil.rmtree(data_root)
+        data_root.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(extract_path, data_root)
 
 
 def _has_canonical_layout(data_root, data_yaml_name):
