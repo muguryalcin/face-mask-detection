@@ -17,7 +17,11 @@ def infer(cfg, image_path, checkpoint_path=None):
     model.eval()
 
     # Load the image and preprocess it
-    image = _load_image_tensor(image_path, int(cfg.preprocessing.image_size))
+    image = _load_image_tensor(
+        image_path,
+        int(cfg.preprocessing.image_size),
+        bool(cfg.preprocessing.normalize),
+    )
     device = next(model.parameters()).device
     image = image.to(device)
 

@@ -23,6 +23,7 @@ dvc-storage/
 /models/
 /checkpoints/
 /mlruns/
+/mlartifacts/
 /outputs/
 /plots/
 

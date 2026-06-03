@@ -31,7 +31,7 @@ def ensure_data_available(cfg):
     # If the YAML file still doesn't exist, download from Kaggle.
     if not data_yaml_path.exists():
         _status("DVC pull did not restore data, downloading from Kaggle...")
-        _download_from_kaggle(cfg, data_root)
+        return download_data(cfg)
 
     # Normalize the layout if its not already (necessary for the kaggle download)
     if not _has_canonical_layout(data_root, data_yaml_name):
@@ -39,6 +39,22 @@ def ensure_data_available(cfg):
         _normalize_kaggle_layout(data_root, data_yaml_name)
 
     # Validate the expected splits are present and return the dataset directory.
+    dataset_dir = _dataset_dir(data_root, data_yaml_name)
+    _validate_splits(dataset_dir)
+    _status(f"Dataset ready at: {dataset_dir}")
+    return dataset_dir
+
+
+def download_data(cfg):
+    # Downloads the data
+    data_root = _data_root(cfg)
+    data_yaml_name = str(cfg.data.data_yaml)
+
+    _download_from_kaggle(cfg, data_root)
+    if not _has_canonical_layout(data_root, data_yaml_name):
+        _status(f"Normalizing Kaggle layout to {data_root / 'dataset'}")
+        _normalize_kaggle_layout(data_root, data_yaml_name)
+
     dataset_dir = _dataset_dir(data_root, data_yaml_name)
     _validate_splits(dataset_dir)
     _status(f"Dataset ready at: {dataset_dir}")
