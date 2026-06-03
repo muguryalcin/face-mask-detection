@@ -25,7 +25,6 @@ dvc-storage/
 /mlruns/
 /mlartifacts/
 /outputs/
-/plots/
 
 # Model artifacts
 *.pt
