@@ -32,4 +32,4 @@ dev = [
 ]
 
 [project.scripts]
-detect-mask = "face_mask_detection.commands:main"
+detect-mask = "face_mask_detection.cli:main"
