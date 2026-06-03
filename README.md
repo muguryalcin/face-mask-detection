@@ -24,18 +24,18 @@ cd face-mask-detection
 uv sync --dev
 ```
 
-Pull data with DVC from the remote storage (Google Drive in this case):
+Pull data with DVC from the configured remote storage:
 
 ```bash
 uv run dvc pull
 ```
 
-# Check Dataset
+## Check Dataset
 
 Prepare/check dataset from the CLI:
 
 ```bash
-uv run detect-mask ensure_data
+uv run detect-mask ensure-data
 ```
 
 ## Pre-commit Hooks
@@ -52,7 +52,7 @@ You can run pre-commit checks on all files with:
 uv run pre-commit run -a
 ```
 
-# Configurations
+## Configurations
 
 Dataset config:
 
@@ -97,7 +97,7 @@ uv run detect-mask train
 Smoke training run (for testing the training pipeline, it runs for 1 epoch and uses only 1 batch for training and validation):
 
 ```bash
-uv run detect-mask train model.pretrained=false training.max_epochs=1 training.limit_train_batches=1 training.limit_val_batches=1 training.batch_size=1 training.num_workers=0
+uv run detect-mask train training=smoke model.pretrained=false
 ```
 
 ## Artifacts
@@ -159,7 +159,7 @@ uv run dvc push
 ```text
 configs/
 face_mask_detection/
-  cli.py
+  commands.py
   data.py
   dvc_utils.py
   metrics.py

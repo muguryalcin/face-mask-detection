@@ -10,20 +10,24 @@ from omegaconf import OmegaConf
 def ensure_data_available(cfg):
     # Ensures the dataset is available locally, either by pulling with DVC or downloading from Kaggle.
     data_root = _data_root(cfg)
+    data_yaml_name = str(cfg.data.data_yaml)
 
-    # Pull from the DVC
-    if not (data_root / cfg.data.data_yaml).exists():
+    # Check if the YAML file exists if not pull from the dvc.
+    if not (data_root / data_yaml_name).exists():
         subprocess.run(
             [sys.executable, "-m", "dvc", "pull"], cwd=_repo_root(), check=False
         )
 
-    # If still not available, download from Kaggle and normalize the layout.
-    if not (data_root / cfg.data.data_yaml).exists():
+    # If the YAML file still doesn't exist, download from Kaggle.
+    if not (data_root / data_yaml_name).exists():
         _download_from_kaggle(cfg, data_root)
 
-    # Fix the folder structure and validate
-    _normalize_kaggle_layout(data_root, cfg.data.data_yaml)
-    dataset_dir = _dataset_dir(data_root, cfg.data.data_yaml)
+    # Normalize the layout if its not already (necessary for the kaggle download)
+    if not _has_canonical_layout(data_root, data_yaml_name):
+        _normalize_kaggle_layout(data_root, data_yaml_name)
+
+    # Validate the expected splits are present and return the dataset directory.
+    dataset_dir = _dataset_dir(data_root, data_yaml_name)
     _validate_splits(dataset_dir)
     return dataset_dir
 
@@ -54,8 +58,22 @@ def _download_from_kaggle(cfg, data_root):
     shutil.copytree(downloaded_path, data_root)
 
 
+def _has_canonical_layout(data_root, data_yaml_name):
+    # Checks if the dataset is already in the expected layout
+    data_yaml_path = data_root / data_yaml_name
+    if not data_yaml_path.exists():
+        return False
+
+    data_yaml = OmegaConf.load(data_yaml_path)
+    if str(data_yaml.path).replace("\\", "/") != "dataset":
+        return False
+    return (data_root / "dataset").is_dir()
+
+
 def _normalize_kaggle_layout(data_root, data_yaml_name):
-    # Flatten the dataset's nested folder structure.
+    # Fix the dataset layout
+    data_yaml_path = data_root / data_yaml_name
+    data_yaml = OmegaConf.load(data_yaml_path)
     dataset_dir = _dataset_dir(data_root, data_yaml_name)
     flat_dataset_dir = data_root / "dataset"
 
@@ -70,10 +88,9 @@ def _normalize_kaggle_layout(data_root, data_yaml_name):
     if repeated_folder.exists():
         shutil.rmtree(repeated_folder)
 
-    # Update the data.yaml to point to the new dataset location.
-    data_yaml = OmegaConf.load(data_root / data_yaml_name)
-    data_yaml.path = "dataset"
-    OmegaConf.save(data_yaml, data_root / data_yaml_name)
+    if str(data_yaml.path).replace("\\", "/") != "dataset":
+        data_yaml.path = "dataset"
+        OmegaConf.save(data_yaml, data_yaml_path)
 
 
 def _validate_splits(dataset_dir):

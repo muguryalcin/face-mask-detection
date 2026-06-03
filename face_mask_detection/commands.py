@@ -12,36 +12,32 @@ CONFIG_DIR = Path(__file__).resolve().parents[1] / "configs"
 
 
 def _load_cfg(overrides=None):
-    # Loads the config and applies overrides
     with initialize_config_dir(config_dir=str(CONFIG_DIR), version_base=None):
         return compose(config_name="config", overrides=_parse_overrides(overrides))
 
 
 def _parse_overrides(overrides):
-    # Applies the overrides
     if not overrides:
         return []
     if isinstance(overrides, str):
         return [x.strip() for x in overrides.split(",") if x.strip()]
+    if len(overrides) == 1 and isinstance(overrides[0], (list, tuple)):
+        overrides = overrides[0]
     return [str(x) for x in overrides]
 
 
-def check_config(overrides=None):
-    # Loads the config and prints it -- debug purposes
+def check_config(*overrides):
     cfg = _load_cfg(overrides)
     print(OmegaConf.to_yaml(cfg, resolve=True))
 
 
-def data_path(overrides=None):
-    # Ensures the data is available and prints the path
+def ensure_data(*overrides):
     cfg = _load_cfg(overrides)
     dataset_path = ensure_data_available(cfg)
     print(dataset_path)
 
 
-def train(overrides=None):
-    # Train the model using the config.
-    # load the config
+def train(*overrides):
     cfg = _load_cfg(overrides)
     run_train(cfg)
 
@@ -56,7 +52,9 @@ def main():
     fire.Fire(
         {
             "check-config": check_config,
-            "data-path": data_path,
+            "ensure-data": ensure_data,
+            "ensure_data": ensure_data,
+            "data-path": ensure_data,
             "train": train,
             "infer": infer,
         }

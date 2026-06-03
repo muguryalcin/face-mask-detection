@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import torch
@@ -10,6 +11,8 @@ from face_mask_detection.dvc_utils import ensure_data_available
 
 # Supported image extensions
 _IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
+NORMALIZE_MEAN = [0.485, 0.456, 0.406]
+NORMALIZE_STD = [0.229, 0.224, 0.225]
 
 
 def convert_yolo_box_to_xyxy(
@@ -72,9 +75,7 @@ class FaceMaskDetectionDataset(Dataset):
 
         image = F.to_tensor(image).to(dtype=torch.float32)
         if self.normalize:
-            image = F.normalize(
-                image, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-            )
+            image = F.normalize(image, mean=NORMALIZE_MEAN, std=NORMALIZE_STD)
         target = self._target(boxes, labels, index)
         return image, target
 
@@ -105,7 +106,7 @@ class FaceMaskDetectionDataset(Dataset):
         image_width, image_height = image_size
         label_path = self.labels_dir / f"{image_path.stem}.txt"
         if not label_path.exists():
-            print(f"Warning: Missing label file for {image_path}: {label_path}")
+            logging.warning("Missing label file for %s: %s", image_path, label_path)
             return [], []
 
         # Parsing
@@ -137,7 +138,7 @@ class FaceMaskDetectionDataset(Dataset):
     def _resize(self, image, boxes):
         # Resize the image and adjust the bounding boxes accordingly.
         if self.image_size <= 0:
-            print("Warning: Image size is not set correctly.")
+            logging.warning("Image size is not set correctly")
             return image, boxes
 
         # Resizing
@@ -218,6 +219,7 @@ class FaceMaskDataModule(LightningDataModule):
             str(split),
             image_size=self.cfg.preprocessing.image_size,
             min_box_size=self.cfg.preprocessing.min_box_size,
+            normalize=self.cfg.preprocessing.normalize,
         )
 
     def _dataloader(self, dataset, shuffle):

@@ -24,6 +24,7 @@ dvc-storage/
 /checkpoints/
 /mlruns/
 /outputs/
+/plots/
 
 # Model artifacts
 *.pt

@@ -10,16 +10,14 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "dvc>=3.67.1",
-    "dvc-gdrive>=3.0.1",
+    "dvc-webdav>=3.0.0",
     "fire>=0.7.1",
     "hydra-core>=1.3.2",
     "kagglehub>=1.0.1",
     "lightning>=2.6.4",
     "matplotlib>=3.10.9",
     "mlflow>=3.12.0",
-    "numpy>=2.4.6",
     "omegaconf>=2.3.0",
-    "pre-commit>=4.6.0",
     "pycocotools>=2.0.11",
     "torch>=2.12.0",
     "torchmetrics>=1.8.2",
@@ -32,7 +30,7 @@ dev = [
 ]
 
 [project.scripts]
-detect-mask = "face_mask_detection.cli:main"
+detect-mask = "face_mask_detection.commands:main"
 
 [tool.ruff]
 fix = true

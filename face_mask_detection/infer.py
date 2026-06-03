@@ -1,14 +1,18 @@
+import logging
 from pathlib import Path
 
 import torch
 from PIL import Image
+from torchvision.transforms import functional as F
 
+from face_mask_detection.data import NORMALIZE_MEAN, NORMALIZE_STD
+from face_mask_detection.dvc_utils import ensure_data_available
 from face_mask_detection.model import FaceMaskDetector
 
 
 def infer(cfg, image_path, checkpoint_path=None):
-    # Inference function to run the model on a single image and print detections.
-    # Load the model
+    # Ensure the data is available and load the model
+    ensure_data_available(cfg)
     model = _load_model(cfg, checkpoint_path)
     model.eval()
 
@@ -48,8 +52,8 @@ def _load_model(cfg, checkpoint_path):
     return FaceMaskDetector(cfg)
 
 
-def _load_image_tensor(image_path, image_size):
-    # Loads the image, resizes it, and converts it to a tensor.
+def _load_image_tensor(image_path, image_size, normalize):
+    # Load the image, resize it, convert to tensor, and optionally normalize it.
     path = Path(image_path)
     if not path.exists():
         raise FileNotFoundError(f"Image not found: {path}")
@@ -57,7 +61,10 @@ def _load_image_tensor(image_path, image_size):
     # Load, convert to RGB, resize, return as tensor
     image = Image.open(path).convert("RGB").resize((image_size, image_size))
     values = torch.tensor(list(image.getdata()), dtype=torch.float32)
-    return values.reshape(image_size, image_size, 3).permute(2, 0, 1) / 255.0
+    tensor = values.reshape(image_size, image_size, 3).permute(2, 0, 1) / 255.0
+    if normalize:
+        tensor = F.normalize(tensor, mean=NORMALIZE_MEAN, std=NORMALIZE_STD)
+    return tensor
 
 
 def _format_detections(cfg, output):
@@ -77,10 +84,9 @@ def _format_detections(cfg, output):
         if score_value < threshold:
             continue
 
-        #
         label_value = int(label.item())
         if label_value < 0 or label_value >= len(class_names):
-            print(f"Warning: Invalid class ID {label_value} in output, skipping")
+            logging.warning("Invalid class ID %s in output, skipping", label_value)
             continue
         class_name = class_names[label_value]
         detections.append(
