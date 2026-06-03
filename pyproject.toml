@@ -33,3 +33,6 @@ dev = [
 
 [project.scripts]
 detect-mask = "face_mask_detection.cli:main"
+
+[tool.ruff]
+fix = true
