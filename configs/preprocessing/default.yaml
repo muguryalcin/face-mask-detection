@@ -1,0 +1,3 @@
+image_size: 320
+normalize: True
+min_box_size: 1

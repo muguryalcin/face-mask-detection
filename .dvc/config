@@ -1,0 +1,6 @@
+[core]
+    remote = data_remote
+['remote "models_remote"']
+    url = /Users/muguryalcin/dvc-storage/face-mask-models
+['remote "data_remote"']
+    url = ../dvc-storage/face-mask-data

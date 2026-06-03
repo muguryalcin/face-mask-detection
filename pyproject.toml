@@ -1,0 +1,29 @@
+[project]
+name = "face-mask-detection"
+version = "0.1.0"
+description = "Face mask detection project for MLOps course at METU"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "dvc>=3.67.1",
+    "fire>=0.7.1",
+    "hydra-core>=1.3.2",
+    "kagglehub>=1.0.1",
+    "lightning>=2.6.4",
+    "matplotlib>=3.10.9",
+    "mlflow>=3.12.0",
+    "numpy>=2.4.6",
+    "omegaconf>=2.3.0",
+    "pre-commit>=4.6.0",
+    "torch>=2.12.0",
+    "torchvision>=0.27.0",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.6.0",
+    "ruff>=0.15.14",
+]
+
+[project.scripts]
+detect-mask = "face_mask_detection.commands:main"

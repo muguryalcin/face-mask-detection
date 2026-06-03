@@ -1,0 +1,16 @@
+defaults:
+  - data: face_mask
+  - preprocessing: default
+  - model: fasterrcnn_resnet50_fpn
+  - training: default
+  - logging: mlflow
+  - inference: default
+  - _self_
+
+seed: 24
+
+paths:
+  data_root: data/asemsaber-face-mask-detection
+  plots_dir: plots
+  models_dir: models
+  checkpoints_dir: checkpoints
