@@ -9,3 +9,7 @@ class_names:
 train_split: train
 val_split: valid
 test_split: test
+split_train_ratio: 0.70
+split_val_ratio: 0.15
+split_test_ratio: 0.15
+split_search_iterations: 20000

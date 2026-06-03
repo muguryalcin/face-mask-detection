@@ -31,7 +31,16 @@ mkdir -p ../dvc-storage/data ../dvc-storage/models
 uv run dvc pull
 ```
 
-If the local DVC cache is unavailable, `uv run detect-mask ensure-data` downloads the dataset from Kaggle.
+If the local DVC cache is unavailable, `uv run detect-mask ensure-data` downloads the dataset from Kaggle with `curl` and normalizes the folder layout.
+
+Recreate the leakage-safe 70/15/15 split before training:
+
+```bash
+uv run detect-mask split-data
+uv run dvc add data
+```
+
+The split is stratified by object counts and grouped by original image ID, so an original image and its augmented version stay in the same split.
 
 ## Check Dataset
 

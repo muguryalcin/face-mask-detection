@@ -6,6 +6,7 @@ from omegaconf import OmegaConf
 
 from face_mask_detection.dvc_utils import ensure_data_available, track_models_with_dvc
 from face_mask_detection.infer import infer as run_infer
+from face_mask_detection.split_data import split_data as run_split_data
 from face_mask_detection.train import train as run_train
 
 CONFIG_DIR = Path(__file__).resolve().parents[1] / "configs"
@@ -44,6 +45,11 @@ def train(*overrides):
     run_train(cfg)
 
 
+def split_data(*overrides):
+    cfg = _load_cfg(overrides)
+    run_split_data(cfg)
+
+
 def track_models(*overrides):
     cfg = _load_cfg(overrides)
     track_models_with_dvc(cfg)
@@ -61,6 +67,8 @@ def main():
             "ensure-data": ensure_data,
             "ensure_data": ensure_data,
             "data-path": ensure_data,
+            "split-data": split_data,
+            "split_data": split_data,
             "track-models": track_models,
             "train": train,
             "infer": infer,

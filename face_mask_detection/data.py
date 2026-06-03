@@ -9,8 +9,7 @@ from torchvision.transforms import functional as F
 
 from face_mask_detection.dvc_utils import ensure_data_available
 
-# Supported image extensions
-_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
+_IMAGE_SUFFIX = ".png"
 NORMALIZE_MEAN = [0.485, 0.456, 0.406]
 NORMALIZE_STD = [0.229, 0.224, 0.225]
 
@@ -90,7 +89,7 @@ class FaceMaskDetectionDataset(Dataset):
         image_paths = sorted(
             path
             for path in self.images_dir.iterdir()
-            if path.suffix.lower() in _IMAGE_EXTENSIONS
+            if path.suffix.lower() == _IMAGE_SUFFIX
         )
         if not image_paths:
             raise FileNotFoundError(f"No images found in {self.images_dir}")
