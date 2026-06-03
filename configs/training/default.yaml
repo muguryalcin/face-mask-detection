@@ -1,10 +1,9 @@
-max_epochs: 2
-batch_size: 2
-num_workers: 0
-accelerator: auto
+max_epochs: 12
+batch_size: 32
+num_workers: 8
+accelerator: gpu
 devices: 1
-# Limit the batches for testing purposes. Remove these lines for full training.
-limit_train_batches: 20
-limit_val_batches: 5
-log_every_n_steps: 1
+limit_train_batches: 1.0
+limit_val_batches: 1.0
+log_every_n_steps: 10
 gradient_clip_val: 1.0

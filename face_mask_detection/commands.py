@@ -65,10 +65,7 @@ def main():
         {
             "check-config": check_config,
             "ensure-data": ensure_data,
-            "ensure_data": ensure_data,
-            "data-path": ensure_data,
             "split-data": split_data,
-            "split_data": split_data,
             "track-models": track_models,
             "train": train,
             "infer": infer,

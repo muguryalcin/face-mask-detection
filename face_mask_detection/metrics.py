@@ -10,16 +10,19 @@ class MetricsHistory(Callback):
         self.history = {}
 
     def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
-        self._collect(trainer.logged_metrics)
+        self._collect(trainer.logged_metrics, prefix="train/")
 
     def on_validation_epoch_end(self, trainer, pl_module):
-        self._collect(trainer.callback_metrics)
+        self._collect(trainer.callback_metrics, prefix="val/")
 
-    def _collect(self, metrics):
+    def _collect(self, metrics, prefix):
         for name, value in metrics.items():
+            name = str(name)
+            if not name.startswith(prefix):
+                continue
             scalar = to_scalar(value)
             if scalar is not None:
-                self.history.setdefault(str(name), []).append(scalar)
+                self.history.setdefault(name, []).append(scalar)
 
 
 class DetectionMetrics:

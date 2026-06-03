@@ -84,24 +84,18 @@ data_remote: ../dvc-storage/data
 models_remote: ../dvc-storage/models
 ```
 
-For a clean clone on the same machine, create the configured local remote folders and pull DVC artifacts:
+For a clean clone on the same machine, create the configured local remote folders and run the `ensure-data` command to download the data:
 
 ```bash
 mkdir -p ../dvc-storage/data ../dvc-storage/models
-uv run dvc pull
-```
-
-If the local DVC storage is unavailable or empty, use the public Kaggle fallback:
-
-```bash
 uv run detect-mask ensure-data
 ```
 
-`ensure-data`, training, split regeneration, and inference all call the data availability check. This script, downloads the Kaggle dataset into the configured `data` directory and fixes the dataset layout.
+Training, split regeneration, and inference all call the `ensure-data` check. It downloads the Kaggle dataset, splits it and fixes the dataset layout.
 
 ## Split Regeneration
 
-`ensure-data` splits the dataset into train/validation/test with a stratified group split by original image ID to prevent leakage. If you want to regenerate the splits with a different random seed or split ratio, change the ratios in the config then run:
+`split-data` splits the dataset into train/validation/test with a stratified group split by original image ID to prevent leakage. If you want to regenerate the splits with a different random seed or split ratio, change the ratios in the config then run:
 
 ```bash
 uv run detect-mask split-data
@@ -131,6 +125,7 @@ configs/data/face_mask.yaml
 configs/model/fasterrcnn_resnet50_fpn.yaml
 configs/preprocessing/default.yaml
 configs/training/default.yaml
+configs/training/h100.yaml
 configs/training/smoke.yaml
 configs/inference/default.yaml
 configs/logging/mlflow.yaml
@@ -168,7 +163,7 @@ Run default training:
 uv run detect-mask train
 ```
 
-The default training config currently limits batches for assignment/runtime practicality. A smoke run for checking the pipeline is:
+The default training config is the H100-oriented full-data config: 12 epochs, batch size 32, GPU accelerator, and 512x512 preprocessing. A smoke run for checking the pipeline is:
 
 ```bash
 uv run detect-mask train training=smoke model.pretrained=false

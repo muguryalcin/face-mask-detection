@@ -2,7 +2,7 @@ defaults:
   - data: face_mask
   - preprocessing: default
   - model: fasterrcnn_resnet50_fpn
-  - training: default
+  - training: h100
   - logging: mlflow
   - inference: default
   - _self_

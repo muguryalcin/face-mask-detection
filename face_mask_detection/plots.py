@@ -13,7 +13,7 @@ def write_training_plots(history, plots_dir):
         # Training curves (loss, loss_step, loss_epoch) and validation curves (loss, loss_epoch)
         _plot_series(
             history,
-            ["train/loss", "train/loss_step", "train/loss_epoch"],
+            ["train/loss_step", "train/loss_epoch"],
             plots_dir / "train_loss.png",
             "Training Loss",
             "loss",
