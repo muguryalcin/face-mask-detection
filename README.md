@@ -190,6 +190,18 @@ checkpoints/last.ckpt
 
 Inference ensures data is available, loads the configured Faster R-CNN model or provided checkpoint, applies configured preprocessing including normalization, and prints detections above `configs/inference/default.yaml` score threshold.
 
+## CLI Commands
+
+The main CLI entry point is `face_mask_detection.commands` with the following commands:
+
+```text
+check-config    Print the current configuration with optional overrides
+ensure-data     Check for data availability, pull with DVC or download from Kaggle if needed
+split-data      Regenerate train/validation/test splits with a stratified group split by original image ID
+train           Train the Faster R-CNN model with the configured settings
+infer           Run inference on a single image with a trained checkpoint
+```
+
 ## Artifacts
 
 Training can generate:
