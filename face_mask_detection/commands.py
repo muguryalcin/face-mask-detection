@@ -12,11 +12,13 @@ CONFIG_DIR = Path(__file__).resolve().parents[1] / "configs"
 
 
 def _load_cfg(overrides=None):
+    # Load the Hydra config and apply overrides
     with initialize_config_dir(config_dir=str(CONFIG_DIR), version_base=None):
         return compose(config_name="config", overrides=_parse_overrides(overrides))
 
 
 def _parse_overrides(overrides):
+    # Parse the overrides
     if not overrides:
         return []
     if isinstance(overrides, str):
@@ -43,7 +45,6 @@ def train(*overrides):
 
 
 def infer(image_path, checkpoint_path=None, overrides=None):
-    # Run inference
     cfg = _load_cfg(overrides)
     run_infer(cfg, image_path=image_path, checkpoint_path=checkpoint_path)
 
