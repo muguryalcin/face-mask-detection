@@ -33,3 +33,4 @@ dvc-storage/
 *.ckpt
 /data
 .DS_Store
+/models

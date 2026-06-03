@@ -95,6 +95,8 @@ uv run detect-mask ensure-data
 
 Training, split regeneration, and inference all call the `ensure-data` check. It downloads the Kaggle dataset, splits it and fixes the dataset layout.
 
+WARNING: If you run `uv run dvc pull` on clean clone before `ensure-data`, it will give an error because the data is not yet in the local DVC remote.
+
 ## Split Regeneration
 
 `split-data` splits the dataset into train/validation/test with a stratified group split by original image ID to prevent leakage. If you want to regenerate the splits with a different random seed or split ratio, change the ratios in the config then run:
@@ -198,6 +200,7 @@ The main CLI entry point is `face_mask_detection.commands` with the following co
 check-config    Print the current configuration with optional overrides
 ensure-data     Check for data availability, pull with DVC or download from Kaggle if needed
 split-data      Regenerate train/validation/test splits with a stratified group split by original image ID
+track-models    Track model artifacts with DVC
 train           Train the Faster R-CNN model with the configured settings
 infer           Run inference on a single image with a trained checkpoint
 ```
@@ -236,6 +239,7 @@ face_mask_detection/      Installable Python package
   plots.py                Training plot generation
   split_data.py           Leakage-safe split regeneration
 data.dvc                  DVC-tracked data artifact
+models.dvc                DVC-tracked model artifact
 pyproject.toml            Package metadata and dependencies
 uv.lock                   Locked dependency graph
 ```
