@@ -1,6 +1,6 @@
 [core]
     remote = data_remote
-[remote "models_remote"]
-    url = webdavs://webdav.yandex.com.tr/face-mask-detection-models
 [remote "data_remote"]
-    url = webdavs://webdav.yandex.com.tr/face-mask-detection
+    url = ../dvc-storage/data
+[remote "models_remote"]
+    url = ../dvc-storage/models

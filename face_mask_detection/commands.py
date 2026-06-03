@@ -4,7 +4,7 @@ import fire
 from hydra import compose, initialize_config_dir
 from omegaconf import OmegaConf
 
-from face_mask_detection.dvc_utils import ensure_data_available
+from face_mask_detection.dvc_utils import ensure_data_available, track_models_with_dvc
 from face_mask_detection.infer import infer as run_infer
 from face_mask_detection.train import train as run_train
 
@@ -44,6 +44,11 @@ def train(*overrides):
     run_train(cfg)
 
 
+def track_models(*overrides):
+    cfg = _load_cfg(overrides)
+    track_models_with_dvc(cfg)
+
+
 def infer(image_path, checkpoint_path=None, overrides=None):
     cfg = _load_cfg(overrides)
     run_infer(cfg, image_path=image_path, checkpoint_path=checkpoint_path)
@@ -56,6 +61,7 @@ def main():
             "ensure-data": ensure_data,
             "ensure_data": ensure_data,
             "data-path": ensure_data,
+            "track-models": track_models,
             "train": train,
             "infer": infer,
         }

@@ -8,7 +8,7 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import MLFlowLogger
 
 from face_mask_detection.data import FaceMaskDataModule
-from face_mask_detection.dvc_utils import ensure_data_available
+from face_mask_detection.dvc_utils import ensure_data_available, track_models_with_dvc
 from face_mask_detection.metrics import MetricsHistory
 from face_mask_detection.model import FaceMaskDetector
 from face_mask_detection.plots import write_training_plots
@@ -68,6 +68,7 @@ def train(cfg):
         history_callback.history, Path(cfg.paths.plots_dir)
     )
     _log_artifacts(logger, [last_checkpoint, model_path, *plot_paths])
+    track_models_with_dvc(cfg)
 
     # Print summary of saved artifacts
     print(f"Saved checkpoint: {last_checkpoint}")

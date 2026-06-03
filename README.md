@@ -24,11 +24,14 @@ cd face-mask-detection
 uv sync --dev
 ```
 
-Pull data with DVC from the configured remote storage:
+Create local DVC remote folders and pull tracked artifacts:
 
 ```bash
+mkdir -p ../dvc-storage/data ../dvc-storage/models
 uv run dvc pull
 ```
+
+If the local DVC cache is unavailable, `uv run detect-mask ensure-data` downloads the dataset from Kaggle.
 
 ## Check Dataset
 
@@ -141,6 +144,13 @@ checkpoints/last.ckpt
 
 ## DVC
 
+The repository uses two local-only DVC remotes:
+
+```text
+data_remote: ../dvc-storage/data
+models_remote: ../dvc-storage/models
+```
+
 Pull artifacts:
 
 ```bash
@@ -151,7 +161,14 @@ Push data changes if needed:
 
 ```bash
 uv run dvc add data
-uv run dvc push
+uv run dvc push -r data_remote data.dvc
+```
+
+Track and push model artifacts after training:
+
+```bash
+uv run detect-mask track-models
+uv run dvc push -r models_remote models.dvc
 ```
 
 ## Repository Structure

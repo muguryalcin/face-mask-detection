@@ -1,3 +1,4 @@
+import logging
 import shutil
 import subprocess
 import sys
@@ -6,30 +7,58 @@ from pathlib import Path
 
 from omegaconf import OmegaConf
 
+LOGGER = logging.getLogger(__name__)
+
 
 def ensure_data_available(cfg):
     # Ensures the dataset is available locally, either by pulling with DVC or downloading from Kaggle.
     data_root = _data_root(cfg)
     data_yaml_name = str(cfg.data.data_yaml)
+    data_yaml_path = data_root / data_yaml_name
 
-    # Check if the YAML file exists if not pull from the dvc.
-    if not (data_root / data_yaml_name).exists():
-        subprocess.run(
-            [sys.executable, "-m", "dvc", "pull"], cwd=_repo_root(), check=False
-        )
+    _status(f"Checking dataset at: {data_root}")
+    if data_yaml_path.exists():
+        _status(f"Dataset YAML found: {data_yaml_path}")
+    else:
+        _status("Dataset missing, running DVC pull...")
+        if _run_dvc(["pull"]):
+            _status("DVC pull succeeded")
+        else:
+            _status("DVC pull failed")
 
     # If the YAML file still doesn't exist, download from Kaggle.
-    if not (data_root / data_yaml_name).exists():
+    if not data_yaml_path.exists():
+        _status("DVC pull did not restore data, downloading from Kaggle...")
         _download_from_kaggle(cfg, data_root)
 
     # Normalize the layout if its not already (necessary for the kaggle download)
     if not _has_canonical_layout(data_root, data_yaml_name):
+        _status(f"Normalizing Kaggle layout to {data_root / 'dataset'}")
         _normalize_kaggle_layout(data_root, data_yaml_name)
 
     # Validate the expected splits are present and return the dataset directory.
     dataset_dir = _dataset_dir(data_root, data_yaml_name)
     _validate_splits(dataset_dir)
+    _status(f"Dataset ready at: {dataset_dir}")
     return dataset_dir
+
+
+def track_models_with_dvc(cfg) -> None:
+    models_dir = Path(cfg.paths.models_dir)
+    if not models_dir.is_absolute():
+        models_dir = _repo_root() / models_dir
+
+    if not models_dir.is_dir() or not any(models_dir.iterdir()):
+        _status(f"No model artifacts found at: {models_dir}")
+        return
+
+    target = _relative_to_repo(models_dir)
+    if _run_dvc(["add", target]):
+        dvc_file = f"{target}.dvc"
+        _status(f"Model artifacts tracked with DVC: {dvc_file}")
+        _status(f"To push models, run: uv run dvc push -r models_remote {dvc_file}")
+    else:
+        _status("DVC model tracking failed")
 
 
 def _data_root(cfg):
@@ -48,8 +77,10 @@ def _dataset_dir(data_root, data_yaml_name):
 
 def _download_from_kaggle(cfg, data_root):
     # Download the dataset from Kaggle using the kagglehub package.
+    _status(f"Downloading Kaggle dataset: {cfg.data.kaggle_dataset}")
     kagglehub = import_module("kagglehub")
     downloaded_path = Path(kagglehub.dataset_download(cfg.data.kaggle_dataset))
+    _status(f"Downloaded Kaggle dataset to: {downloaded_path}")
 
     # Clear the existing data root if it exists, then copy the downloaded dataset there.
     if data_root.exists():
@@ -102,6 +133,37 @@ def _validate_splits(dataset_dir):
     ]
     if missing:
         raise FileNotFoundError(f"Missing dataset splits {missing} in {dataset_dir}")
+
+
+def _run_dvc(args: list[str]) -> bool:
+    command = [sys.executable, "-m", "dvc", *args]
+    _status(f"Running: uv run dvc {' '.join(args)}")
+    result = subprocess.run(
+        command,
+        cwd=_repo_root(),
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+    if result.returncode == 0:
+        if result.stdout.strip():
+            _status(result.stdout.strip())
+        return True
+
+    if result.stdout.strip():
+        _status(result.stdout.strip())
+    if result.stderr.strip():
+        _status(result.stderr.strip())
+    return False
+
+
+def _status(message: str) -> None:
+    print(message)
+    LOGGER.info(message)
+
+
+def _relative_to_repo(path: Path) -> str:
+    return path.resolve().relative_to(_repo_root()).as_posix()
 
 
 def _repo_root():
