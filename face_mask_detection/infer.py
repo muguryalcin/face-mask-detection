@@ -5,7 +5,6 @@ import torch
 from PIL import Image
 from torchvision.transforms import functional as F
 
-from face_mask_detection.data import NORMALIZE_MEAN, NORMALIZE_STD
 from face_mask_detection.dvc_utils import ensure_data_available
 from face_mask_detection.model import FaceMaskDetector
 
@@ -21,6 +20,8 @@ def infer(cfg, image_path, checkpoint_path=None):
         image_path,
         int(cfg.preprocessing.image_size),
         bool(cfg.preprocessing.normalize),
+        cfg.preprocessing.normalize_mean,
+        cfg.preprocessing.normalize_std,
     )
     device = next(model.parameters()).device
     image = image.to(device)
@@ -56,7 +57,9 @@ def _load_model(cfg, checkpoint_path):
     return FaceMaskDetector(cfg)
 
 
-def _load_image_tensor(image_path, image_size, normalize):
+def _load_image_tensor(
+    image_path, image_size, normalize, normalize_mean, normalize_std
+):
     # Load the image, resize it, convert to tensor, and optionally normalize it.
     path = Path(image_path)
     if not path.exists():
@@ -67,12 +70,16 @@ def _load_image_tensor(image_path, image_size, normalize):
     values = torch.tensor(list(image.getdata()), dtype=torch.float32)
     tensor = values.reshape(image_size, image_size, 3).permute(2, 0, 1) / 255.0
     if normalize:
-        tensor = F.normalize(tensor, mean=NORMALIZE_MEAN, std=NORMALIZE_STD)
+        tensor = F.normalize(
+            tensor,
+            mean=[float(value) for value in normalize_mean],
+            std=[float(value) for value in normalize_std],
+        )
     return tensor
 
 
 def _format_detections(cfg, output):
-    # Formats the raw model output into a list of detections with class names, scores, and bounding boxes.j
+    # Formats the raw model output into a list of detections with class names, scores, and bounding boxes.
     threshold = float(cfg.inference.score_threshold)
     max_detections = int(cfg.inference.max_detections)
     class_names = list(cfg.data.class_names)

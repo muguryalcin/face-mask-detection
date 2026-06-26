@@ -10,8 +10,13 @@ from torchvision.transforms import functional as F
 from face_mask_detection.dvc_utils import ensure_data_available
 
 _IMAGE_SUFFIX = ".png"
-NORMALIZE_MEAN = [0.485, 0.456, 0.406]
-NORMALIZE_STD = [0.229, 0.224, 0.225]
+
+
+def _normalization_values(values, name):
+    parsed_values = [float(value) for value in values]
+    if len(parsed_values) != 3:
+        raise ValueError(f"{name} must contain 3 values")
+    return parsed_values
 
 
 def convert_yolo_box_to_xyxy(
@@ -47,6 +52,8 @@ class FaceMaskDetectionDataset(Dataset):
         min_box_size=1.0,
         class_offset=1,
         normalize=True,
+        normalize_mean=None,
+        normalize_std=None,
     ):
         self.dataset_dir = Path(dataset_dir)
         self.split = split
@@ -57,6 +64,15 @@ class FaceMaskDetectionDataset(Dataset):
         self.images_dir = self.dataset_dir / split / "images"
         self.labels_dir = self.dataset_dir / split / "labels"
         self.normalize = bool(normalize)
+        self.normalize_mean = None
+        self.normalize_std = None
+        if self.normalize:
+            if normalize_mean is None or normalize_std is None:
+                raise ValueError("Normalization mean and std must be configured")
+            self.normalize_mean = _normalization_values(
+                normalize_mean, "normalize_mean"
+            )
+            self.normalize_std = _normalization_values(normalize_std, "normalize_std")
         self.image_paths = self._find_images()
 
     def __len__(self):
@@ -74,7 +90,11 @@ class FaceMaskDetectionDataset(Dataset):
 
         image = F.to_tensor(image).to(dtype=torch.float32)
         if self.normalize:
-            image = F.normalize(image, mean=NORMALIZE_MEAN, std=NORMALIZE_STD)
+            image = F.normalize(
+                image,
+                mean=self.normalize_mean,
+                std=self.normalize_std,
+            )
         target = self._target(boxes, labels, index)
         return image, target
 
@@ -219,6 +239,8 @@ class FaceMaskDataModule(LightningDataModule):
             image_size=self.cfg.preprocessing.image_size,
             min_box_size=self.cfg.preprocessing.min_box_size,
             normalize=self.cfg.preprocessing.normalize,
+            normalize_mean=self.cfg.preprocessing.normalize_mean,
+            normalize_std=self.cfg.preprocessing.normalize_std,
         )
 
     def _dataloader(self, dataset, shuffle):
